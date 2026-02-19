@@ -783,11 +783,17 @@ class Maze {
     constructor(size) {
         this.size = size;
         this.instanceId = 'maze-' + Math.random().toString(36).substr(2, 9);
+        this.canvas = null;
+        this.ctx = null;
+        this.isDrawing = false;
         // Each cell has walls: top, right, bottom, left
         this.cells = Array(size).fill(null).map(() =>
             Array(size).fill(null).map(() => ({ top: true, right: true, bottom: true, left: true, visited: false }))
         );
         this.generate();
+
+        if (!window.mazeGames) window.mazeGames = {};
+        window.mazeGames[this.instanceId] = this;
     }
 
     generate() {
@@ -830,11 +836,12 @@ class Maze {
     renderHTML() {
         const cellSize = this.size <= 10 ? 24 : 16;
         const wallWidth = 2;
+        const totalSize = (cellSize + wallWidth) * this.size + wallWidth;
 
-        // Render as a table for proper wall alignment
         let html = `<div class="maze-container" data-maze-id="${this.instanceId}">`;
-        html += `<table class="maze-grid" style="border-collapse:collapse;">`;
+        html += `<div class="maze-wrapper" style="position:relative;display:inline-block;">`;
 
+        html += `<table class="maze-grid" style="border-collapse:collapse;">`;
         for (let r = 0; r < this.size; r++) {
             html += '<tr>';
             for (let c = 0; c < this.size; c++) {
@@ -856,9 +863,65 @@ class Maze {
             }
             html += '</tr>';
         }
+        html += '</table>';
 
-        html += '</table></div>';
+        // Drawing canvas overlay
+        html += `<canvas class="maze-canvas" data-maze-id="${this.instanceId}" width="${totalSize}" height="${totalSize}"></canvas>`;
+        html += `</div>`;
+        html += `<div class="maze-controls">`;
+        html += `<button class="maze-clear-btn" data-maze-id="${this.instanceId}">Clear Path</button>`;
+        html += `</div>`;
+        html += '</div>';
         return html;
+    }
+
+    initCanvas(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.ctx.lineCap = 'round';
+        this.ctx.lineJoin = 'round';
+        this.ctx.lineWidth = 3;
+        this.ctx.strokeStyle = '#DC143C';
+        this.isDrawing = false;
+
+        canvas.addEventListener('mousedown', (e) => this.startDraw(e));
+        canvas.addEventListener('mousemove', (e) => this.draw(e));
+        canvas.addEventListener('mouseup', () => this.stopDraw());
+        canvas.addEventListener('mouseout', () => this.stopDraw());
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.startDraw(e.touches[0]);
+        }, { passive: false });
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            this.draw(e.touches[0]);
+        }, { passive: false });
+        canvas.addEventListener('touchend', () => this.stopDraw());
+    }
+
+    startDraw(e) {
+        this.isDrawing = true;
+        const rect = this.canvas.getBoundingClientRect();
+        this.ctx.beginPath();
+        this.ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+    }
+
+    draw(e) {
+        if (!this.isDrawing) return;
+        const rect = this.canvas.getBoundingClientRect();
+        this.ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+        this.ctx.stroke();
+    }
+
+    stopDraw() {
+        this.isDrawing = false;
+    }
+
+    clearCanvas() {
+        if (this.ctx && this.canvas) {
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        }
     }
 }
 
@@ -1331,7 +1394,13 @@ class GameManager {
             case 'maze': {
                 const mazeSize = size === 'large' ? 18 : 10;
                 const m = new Maze(mazeSize);
-                return { type: 'maze', title: entry.title, content: m.renderHTML(), height: size };
+                return {
+                    type: 'maze', title: entry.title, content: m.renderHTML(), height: size,
+                    init: (element) => {
+                        const canvas = element.querySelector('.maze-canvas');
+                        if (canvas) m.initCanvas(canvas);
+                    }
+                };
             }
             case 'crossword': {
                 const numWords = size === 'large' ? 7 : 4;
@@ -1524,6 +1593,16 @@ document.addEventListener('click', function(e) {
                     gameContainer.innerHTML = game.renderHTML();
                 }
             }
+        }
+    }
+});
+
+// Maze event delegation
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('maze-clear-btn')) {
+        const mazeId = e.target.dataset.mazeId;
+        if (window.mazeGames && window.mazeGames[mazeId]) {
+            window.mazeGames[mazeId].clearCanvas();
         }
     }
 });

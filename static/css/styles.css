@@ -750,6 +750,32 @@ body {
     vertical-align: middle;
 }
 
+.maze-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    cursor: crosshair;
+    touch-action: none;
+}
+
+.maze-controls {
+    margin-top: 8px;
+}
+
+.maze-clear-btn {
+    background: var(--red-primary);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.maze-clear-btn:hover {
+    background: var(--red-dark);
+}
+
 .maze-start, .maze-end {
     display: inline-block;
     font-weight: bold;
