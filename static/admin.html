@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - DinerPlacemat.com</title>
+    <meta name="description" content="Admin panel for managing DinerPlacemat business listings.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍽️</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        /* Login Screen */
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 40px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .login-container h1 {
+            margin-bottom: 24px;
+            text-align: center;
+            color: #DC143C;
+        }
+        
+        .login-form input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .login-form button {
+            width: 100%;
+            padding: 12px;
+            background: #DC143C;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        
+        .login-form button:hover {
+            background: #B22222;
+        }
+        
+        .error-msg {
+            color: #DC143C;
+            margin-top: 12px;
+            text-align: center;
+        }
+        
+        /* Admin Dashboard */
+        .admin-container {
+            display: none;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .admin-header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .admin-header h1 {
+            color: #DC143C;
+        }
+        
+        .logout-btn {
+            padding: 8px 16px;
+            background: #666;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .logout-btn:hover {
+            background: #555;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .back-link {
+            color: #DC143C;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 16px;
+            border: 1px solid #DC143C;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        
+        .back-link:hover {
+            background: #DC143C;
+            color: white;
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            background: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .tab.active {
+            background: #DC143C;
+            color: white;
+        }
+        
+        /* Filters */
+        .filters {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .filters label {
+            font-weight: 500;
+        }
+        
+        .filters select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        /* Listings Grid */
+        .listings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        
+        .listing-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .listing-card.pending {
+            border-left: 4px solid #ffc107;
+        }
+        
+        .listing-card.approved {
+            border-left: 4px solid #28a745;
+        }
+        
+        .listing-card.expired {
+            border-left: 4px solid #dc3545;
+        }
+        
+        .listing-card.rejected {
+            border-left: 4px solid #6c757d;
+        }
+        
+        .listing-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+        
+        .listing-header h3 {
+            font-size: 1.2rem;
+            color: #333;
+        }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-badge.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-badge.approved {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-badge.expired {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-badge.rejected {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+        
+        .listing-details {
+            margin-bottom: 16px;
+        }
+        
+        .listing-details p {
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .listing-details .label {
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .expiration-info {
+            margin-top: 8px;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+        
+        .expiration-info.expired {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .expiration-info.expiring-soon {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        /* Actions */
+        .listing-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .btn-approve {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-approve:hover {
+            background: #218838;
+        }
+        
+        .btn-reject {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-reject:hover {
+            background: #c82333;
+        }
+        
+        .btn-extend {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .btn-extend:hover {
+            background: #138496;
+        }
+        
+        .btn-delete {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-delete:hover {
+            background: #5a6268;
+        }
+        
+        /* Modal for rejection reason */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            z-index: 1001;
+        }
+        
+        .modal h3 {
+            margin-bottom: 16px;
+        }
+        
+        .modal textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            min-height: 100px;
+            margin-bottom: 16px;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px;
+            color: #666;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-container">
+        <h1>🔒 Admin Login</h1>
+        <form id="loginForm" class="login-form">
+            <input type="text" id="username" placeholder="Username" value="admin" readonly>
+            <input type="password" id="password" placeholder="Password" required autofocus>
+            <button type="submit">Login</button>
+        </form>
+        <div id="loginError" class="error-msg"></div>
+    </div>
+    
+    <!-- Admin Dashboard -->
+    <div id="adminDashboard" class="admin-container">
+        <div class="admin-header">
+            <h1>📋 DinerPlacemat Admin</h1>
+            <div class="header-actions">
+                <a href="index.html" class="back-link">← Back to Directory</a>
+                <button id="logoutBtn" class="logout-btn">Logout</button>
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" data-tab="pending">Pending Approval</button>
+            <button class="tab" data-tab="all">All Listings</button>
+        </div>
+        
+        <!-- Filters (for All Listings tab) -->
+        <div id="filters" class="filters hidden">
+            <label>Filter by status:</label>
+            <select id="statusFilter">
+                <option value="all">All</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="expired">Expired</option>
+                <option value="rejected">Rejected</option>
+            </select>
+        </div>
+        
+        <!-- Listings Container -->
+        <div id="listingsContainer" class="listings-grid"></div>
+        
+        <div id="emptyState" class="empty-state hidden">
+            No listings found.
+        </div>
+    </div>
+    
+    <!-- Rejection Modal -->
+    <div id="rejectionModal" class="modal-overlay">
+        <div class="modal">
+            <h3>Reject Listing</h3>
+            <p>Please provide a reason for rejection:</p>
+            <textarea id="rejectionReason" placeholder="Reason for rejection..."></textarea>
+            <div class="modal-actions">
+                <button class="btn" onclick="closeRejectionModal()">Cancel</button>
+                <button class="btn btn-reject" onclick="confirmRejection()">Reject</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // State
+        let currentTab = 'pending';
+        let currentFilter = 'all';
+        let listings = [];
+        let selectedListingId = null;
+        
+        // DOM Elements
+        const loginScreen = document.getElementById('loginScreen');
+        const adminDashboard = document.getElementById('adminDashboard');
+        const loginForm = document.getElementById('loginForm');
+        const loginError = document.getElementById('loginError');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const listingsContainer = document.getElementById('listingsContainer');
+        const emptyState = document.getElementById('emptyState');
+        const tabs = document.querySelectorAll('.tab');
+        const filters = document.getElementById('filters');
+        const statusFilter = document.getElementById('statusFilter');
+        const rejectionModal = document.getElementById('rejectionModal');
+        const rejectionReason = document.getElementById('rejectionReason');
+        
+        // Check if already logged in
+        checkAuth();
+        
+        // Event Listeners
+        loginForm.addEventListener('submit', handleLogin);
+        logoutBtn.addEventListener('click', handleLogout);
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentTab = tab.dataset.tab;
+                filters.classList.toggle('hidden', currentTab === 'pending');
+                loadListings();
+            });
+        });
+        
+        statusFilter.addEventListener('change', (e) => {
+            currentFilter = e.target.value;
+            loadListings();
+        });
+        
+        // Auth Functions
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/admin/pending');
+                if (response.ok) {
+                    showDashboard();
+                    loadListings();
+                } else {
+                    showLogin();
+                }
+            } catch (error) {
+                showLogin();
+            }
+        }
+        
+        async function handleLogin(e) {
+            e.preventDefault();
+            loginError.textContent = '';
+            
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'admin', password })
+                });
+                
+                if (response.ok) {
+                    showDashboard();
+                    loadListings();
+                } else {
+                    loginError.textContent = 'Invalid password';
+                }
+            } catch (error) {
+                loginError.textContent = 'Login failed. Please try again.';
+            }
+        }
+        
+        async function handleLogout() {
+            try {
+                await fetch('/api/admin/logout', { method: 'POST' });
+            } catch (error) {
+                // Ignore errors
+            }
+            showLogin();
+        }
+        
+        function showLogin() {
+            loginScreen.style.display = 'block';
+            adminDashboard.style.display = 'none';
+        }
+        
+        function showDashboard() {
+            loginScreen.style.display = 'none';
+            adminDashboard.style.display = 'block';
+        }
+        
+        // Listings Functions
+        async function loadListings() {
+            try {
+                const endpoint = currentTab === 'pending' 
+                    ? '/api/admin/pending'
+                    : `/api/admin/all?status=${currentFilter}`;
+                
+                const response = await fetch(endpoint);
+                if (!response.ok) throw new Error('Failed to load');
+                
+                listings = await response.json();
+                renderListings();
+            } catch (error) {
+                console.error('Error loading listings:', error);
+                listingsContainer.innerHTML = '<div class="empty-state">Error loading listings. Please refresh.</div>';
+            }
+        }
+        
+        function renderListings() {
+            if (listings.length === 0) {
+                listingsContainer.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            listingsContainer.innerHTML = listings.map(listing => createListingCard(listing)).join('');
+        }
+        
+        function createListingCard(listing) {
+            const daysUntilExpiration = listing.expires_at 
+                ? Math.ceil((new Date(listing.expires_at) - new Date()) / (1000 * 60 * 60 * 24))
+                : null;
+            
+            let expirationClass = '';
+            let expirationText = '';
+            
+            if (listing.status === 'approved' && daysUntilExpiration !== null) {
+                if (daysUntilExpiration < 0) {
+                    expirationClass = 'expired';
+                    expirationText = `⚠️ EXPIRED ${Math.abs(daysUntilExpiration)} days ago`;
+                } else if (daysUntilExpiration <= 30) {
+                    expirationClass = 'expiring-soon';
+                    expirationText = `⏰ Expires in ${daysUntilExpiration} days`;
+                } else {
+                    expirationText = `✓ Expires in ${daysUntilExpiration} days`;
+                }
+            }
+            
+            const location = [listing.location_city, listing.location_state].filter(Boolean).join(', ');
+            
+            let actions = '';
+            if (listing.status === 'pending') {
+                actions = `
+                    <button class="btn btn-approve" onclick="approveListing(${listing.id})">✓ Approve</button>
+                    <button class="btn btn-reject" onclick="openRejectionModal(${listing.id})">✗ Reject</button>
+                `;
+            } else if (listing.status === 'approved' || listing.status === 'expired') {
+                actions = `
+                    <button class="btn btn-extend" onclick="extendListing(${listing.id})">↻ Extend 6mo</button>
+                    <button class="btn btn-delete" onclick="deleteListing(${listing.id})">🗑 Delete</button>
+                `;
+            } else {
+                actions = `
+                    <button class="btn btn-delete" onclick="deleteListing(${listing.id})">🗑 Delete</button>
+                `;
+            }
+            
+            return `
+                <div class="listing-card ${listing.status}">
+                    <div class="listing-header">
+                        <h3>${escapeHtml(listing.business_name)}</h3>
+                        <span class="status-badge ${listing.status}">${listing.status}</span>
+                    </div>
+                    <div class="listing-details">
+                        <p><span class="label">Type:</span> ${escapeHtml(listing.business_type)}</p>
+                        <p><span class="label">Parish:</span> ${escapeHtml(listing.parish)}</p>
+                        ${location ? `<p><span class="label">Location:</span> ${escapeHtml(location)}</p>` : ''}
+                        <p><span class="label">Contact:</span> ${escapeHtml(listing.contact_email)}</p>
+                        ${listing.contact_phone ? `<p><span class="label">Phone:</span> ${escapeHtml(listing.contact_phone)}</p>` : ''}
+                        <p><span class="label">Description:</span> ${escapeHtml(listing.description)}</p>
+                        <p><span class="label">Submitted:</span> ${formatDate(listing.submitted_at)}</p>
+                        ${listing.rejection_reason ? `<p><span class="label">Rejection Reason:</span> ${escapeHtml(listing.rejection_reason)}</p>` : ''}
+                        ${expirationText ? `<div class="expiration-info ${expirationClass}">${expirationText}</div>` : ''}
+                    </div>
+                    <div class="listing-actions">
+                        ${actions}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Action Functions
+        async function approveListing(id) {
+            if (!confirm('Approve this listing? It will be visible on the site.')) return;
+            
+            try {
+                const response = await fetch(`/api/admin/approve`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                });
+                
+                if (response.ok) {
+                    loadListings();
+                } else {
+                    alert('Failed to approve listing');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        function openRejectionModal(id) {
+            selectedListingId = id;
+            rejectionReason.value = '';
+            rejectionModal.style.display = 'block';
+        }
+        
+        function closeRejectionModal() {
+            rejectionModal.style.display = 'none';
+            selectedListingId = null;
+        }
+        
+        async function confirmRejection() {
+            if (!selectedListingId) return;
+            
+            const reason = rejectionReason.value.trim();
+            if (!reason) {
+                alert('Please provide a rejection reason');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/admin/reject`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: selectedListingId, reason })
+                });
+                
+                if (response.ok) {
+                    closeRejectionModal();
+                    loadListings();
+                } else {
+                    alert('Failed to reject listing');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        async function extendListing(id) {
+            if (!confirm('Extend this listing by 6 months?')) return;
+            
+            try {
+                const response = await fetch(`/api/admin/extend`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                });
+                
+                if (response.ok) {
+                    loadListings();
+                } else {
+                    alert('Failed to extend listing');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        async function deleteListing(id) {
+            if (!confirm('⚠️ WARNING: This will permanently delete the listing. Are you sure?')) return;
+            
+            try {
+                const response = await fetch(`/api/admin/delete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                });
+                
+                if (response.ok) {
+                    loadListings();
+                } else {
+                    alert('Failed to delete listing');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        // Utilities
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            return new Date(dateString).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+        
+        // Close modal on overlay click
+        rejectionModal.addEventListener('click', (e) => {
+            if (e.target === rejectionModal) {
+                closeRejectionModal();
+            }
+        });
+    </script>
+</body>
+</html>
