@@ -21,6 +21,12 @@ export async function onRequestGet(context) {
   }
   
   try {
+    // Auto-expire approved listings whose expires_at has passed
+    await env.DB.prepare(`
+      UPDATE listings SET status = 'expired'
+      WHERE status = 'approved' AND expires_at IS NOT NULL AND expires_at <= datetime('now')
+    `).run();
+
     // Get status filter
     const url = new URL(request.url);
     const statusFilter = url.searchParams.get('status') || 'all';

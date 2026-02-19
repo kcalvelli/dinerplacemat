@@ -3,9 +3,19 @@
  * Creates a new pending listing from form submission
  */
 
+import { validateOrigin } from './admin/auth.js';
+
 export async function onRequestPost(context) {
   const { request, env } = context;
-  
+
+  // Origin validation to prevent cross-site submission spam
+  if (!validateOrigin(request)) {
+    return new Response(
+      JSON.stringify({ error: 'Invalid origin' }),
+      { status: 403, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
   try {
     // Parse request body
     const body = await request.json();

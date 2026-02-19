@@ -3,10 +3,18 @@
  * Approves a pending listing (requires auth)
  */
 
-import { verifyAuth } from './auth.js';
+import { verifyAuth, validateOrigin } from './auth.js';
 
 export async function onRequestPost(context) {
   const { request, env } = context;
+
+  // CSRF protection
+  if (!validateOrigin(request)) {
+    return new Response(
+      JSON.stringify({ error: 'Invalid origin' }),
+      { status: 403, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
 
   // Verify authentication
   const auth = await verifyAuth(request, env.JWT_SECRET);

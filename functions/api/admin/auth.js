@@ -1,37 +1,19 @@
 /**
  * Admin Authentication Utilities
- * JWT verification and password hashing
+ * JWT verification and bcrypt password hashing
  */
+
+import { hashSync, compareSync } from 'bcrypt-edge';
 
 // Admin username is fixed
 const ADMIN_USERNAME = 'admin';
 
-// Store password hash in database - we'll verify using SHA-256 for Workers compatibility
-
 /**
- * Verify admin password against stored hash
- * Uses SHA-256 hash comparison (simpler for Workers environment)
+ * Verify admin password against stored bcrypt hash
  */
 export async function verifyPassword(password, passwordHash) {
   try {
-    // Hash the provided password
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const computedHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    
-    // Timing-safe comparison
-    if (computedHash.length !== passwordHash.length) {
-      return false;
-    }
-    
-    let result = 0;
-    for (let i = 0; i < computedHash.length; i++) {
-      result |= computedHash.charCodeAt(i) ^ passwordHash.charCodeAt(i);
-    }
-    
-    return result === 0;
+    return compareSync(password, passwordHash);
   } catch (error) {
     console.error('Password verification error:', error);
     return false;
@@ -39,14 +21,10 @@ export async function verifyPassword(password, passwordHash) {
 }
 
 /**
- * Generate SHA-256 hash of password (for initial setup)
+ * Generate bcrypt hash of password (for initial setup)
  */
 export async function hashPassword(password) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashSync(password, 10);
 }
 
 /**
@@ -202,6 +180,40 @@ function base64UrlDecode(str, encoding = 'buffer') {
     bytes[i] = decoded.charCodeAt(i);
   }
   return bytes.buffer;
+}
+
+/**
+ * Validate Origin header to prevent CSRF attacks.
+ * Allows same-origin requests and requests with no Origin (e.g., direct navigation).
+ * For local dev, allows localhost origins.
+ */
+export function validateOrigin(request) {
+  const origin = request.headers.get('Origin');
+  if (!origin) {
+    // No Origin header - could be same-origin navigation or non-browser client.
+    // Check Referer as fallback.
+    const referer = request.headers.get('Referer');
+    if (!referer) return true; // No origin info - allow (non-browser clients like curl)
+    try {
+      const refererUrl = new URL(referer);
+      const requestUrl = new URL(request.url);
+      return refererUrl.origin === requestUrl.origin;
+    } catch {
+      return false;
+    }
+  }
+
+  try {
+    const requestUrl = new URL(request.url);
+    // Allow same origin
+    if (origin === requestUrl.origin) return true;
+    // Allow localhost variants for local dev
+    const originUrl = new URL(origin);
+    if (originUrl.hostname === 'localhost' || originUrl.hostname === '127.0.0.1') return true;
+    return false;
+  } catch {
+    return false;
+  }
 }
 
 export { ADMIN_USERNAME };

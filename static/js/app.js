@@ -106,7 +106,7 @@ function renderPlacemat() {
     // Build array of items to render (listings + games interspersed)
     const itemsToRender = [];
     let gameCount = 0;
-    const maxGames = Math.max(3, Math.min(8, Math.floor(shuffledListings.length / 2) + 2));
+    const maxGames = Math.max(3, Math.min(gameManager.getAvailableTypeCount(), Math.ceil(shuffledListings.length / 3)));
     
     // Always add at least one game at the start
     itemsToRender.push({ type: 'game' });
@@ -136,7 +136,7 @@ function renderPlacemat() {
             placematGrid.appendChild(createListingCard(item.data, cardSize));
         } else {
             const game = gameManager.generateRandomGame();
-            placematGrid.appendChild(createGameCard(game));
+            if (game) placematGrid.appendChild(createGameCard(game));
         }
     });
     
@@ -198,19 +198,17 @@ function createListingCard(listing, size) {
 // Create game card element
 function createGameCard(game) {
     const card = document.createElement('div');
-    const spanClass = game.span ? `card-${game.span}` : '';
-    card.className = `card game-card card-${game.height} ${spanClass}`;
-    
+    card.className = `card game-card card-${game.height}`;
+
     card.innerHTML = `
         <h3>${game.title}</h3>
         <div class="game-container">
             ${game.content}
         </div>
     `;
-    
+
     // Initialize game if needed (e.g., for canvas-based games)
     if (game.init) {
-        // Use requestAnimationFrame to ensure DOM is ready
         requestAnimationFrame(() => {
             const gameContainer = card.querySelector('.game-container');
             if (gameContainer) {
@@ -218,19 +216,7 @@ function createGameCard(game) {
             }
         });
     }
-    
-    // For scribble pad, store reference on canvas
-    if (game.type === 'scribble') {
-        requestAnimationFrame(() => {
-            const canvas = card.querySelector('canvas');
-            if (canvas) {
-                const scribble = new ScribblePad();
-                scribble.init(canvas);
-                canvas.scribblePad = scribble;
-            }
-        });
-    }
-    
+
     return card;
 }
 

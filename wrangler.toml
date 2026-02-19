@@ -1,6 +1,9 @@
 name = "dinerplacemat"
 compatibility_date = "2024-01-01"
 
+# Pages build output directory (must be top-level for Pages)
+pages_build_output_dir = "./static"
+
 # D1 Database binding
 [[d1_databases]]
 binding = "DB"
@@ -12,17 +15,9 @@ database_id = "60de7590-d131-426d-9e23-66ae69dffabb"
 binding = "dinerplacemat_logos"
 bucket_name = "dinerplacemat-logos"
 
-# Pages Functions configuration
-[site]
-bucket = "./static"
-
-# Pages build output directory (required)
-pages_build_output_dir = "./static"
-
 # Environment variables (set via wrangler secret or dashboard)
 [vars]
 ADMIN_USERNAME = "admin"
-ACCOUNT_ID = "f79df540d6ae680032286d53140d2efd"
 
 # Secrets (set via wrangler secret put JWT_SECRET)
 # JWT_SECRET = "your-jwt-secret-here"

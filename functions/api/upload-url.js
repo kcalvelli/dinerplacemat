@@ -3,9 +3,19 @@
  * Accepts base64 image, uploads to R2, returns public URL
  */
 
+import { validateOrigin } from './admin/auth.js';
+
 export async function onRequestPost(context) {
   const { request, env } = context;
-  
+
+  // Origin validation to prevent abuse from external sites
+  if (!validateOrigin(request)) {
+    return new Response(
+      JSON.stringify({ error: 'Invalid origin' }),
+      { status: 403, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
   try {
     const body = await request.json();
     const { image, filename } = body;

@@ -3,15 +3,23 @@
  * Authenticates admin and sets JWT cookie
  */
 
-import { verifyPassword, generateToken, createAuthResponse, createLogoutResponse, ADMIN_USERNAME } from './auth.js';
+import { verifyPassword, generateToken, createAuthResponse, validateOrigin, ADMIN_USERNAME } from './auth.js';
 
 export async function onRequestPost(context) {
   const { request, env } = context;
   
+  // CSRF protection
+  if (!validateOrigin(request)) {
+    return new Response(
+      JSON.stringify({ error: 'Invalid origin' }),
+      { status: 403, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
   try {
     const body = await request.json();
     const { username, password } = body;
-    
+
     // Validate username
     if (username !== ADMIN_USERNAME) {
       return new Response(
@@ -72,14 +80,6 @@ export async function onRequestPost(context) {
       }
     );
   }
-}
-
-/**
- * POST /api/admin/logout
- * Clears JWT cookie
- */
-export async function onRequestPostLogout(context) {
-  return createLogoutResponse();
 }
 
 // Re-export verifyAuth for use in other admin endpoints

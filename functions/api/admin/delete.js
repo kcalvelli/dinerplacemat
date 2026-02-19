@@ -3,10 +3,18 @@
  * Deletes a listing and its logo from R2 (requires auth)
  */
 
-import { verifyAuth } from './auth.js';
+import { verifyAuth, validateOrigin } from './auth.js';
 
 export async function onRequestPost(context) {
   const { request, env } = context;
+
+  // CSRF protection
+  if (!validateOrigin(request)) {
+    return new Response(
+      JSON.stringify({ error: 'Invalid origin' }),
+      { status: 403, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
 
   // Verify authentication
   const auth = await verifyAuth(request, env.JWT_SECRET);
@@ -59,10 +67,11 @@ export async function onRequestPost(context) {
     // Delete logo from R2 if exists (best effort)
     if (logoUrl) {
       try {
-        // Extract key from URL
-        const url = new URL(logoUrl);
-        const key = url.pathname.substring(1); // Remove leading slash
-        
+        // Logo URLs are relative paths like /api/logo/filename.ext
+        // Extract filename and reconstruct the R2 key
+        const filename = logoUrl.replace(/^\/api\/logo\//, '');
+        const key = filename ? `logos/${filename}` : null;
+
         if (key) {
           await env.dinerplacemat_logos.delete(key);
         }
