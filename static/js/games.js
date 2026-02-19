@@ -829,29 +829,35 @@ class Maze {
 
     renderHTML() {
         const cellSize = this.size <= 10 ? 24 : 16;
-        const totalSize = cellSize * this.size;
+        const wallWidth = 2;
 
+        // Render as a table for proper wall alignment
         let html = `<div class="maze-container" data-maze-id="${this.instanceId}">`;
-        html += `<div class="maze-grid" style="width:${totalSize}px;height:${totalSize}px;position:relative;">`;
+        html += `<table class="maze-grid" style="border-collapse:collapse;">`;
 
         for (let r = 0; r < this.size; r++) {
+            html += '<tr>';
             for (let c = 0; c < this.size; c++) {
                 const cell = this.cells[r][c];
-                const borders = [];
-                if (cell.top) borders.push('border-top:2px solid #333');
-                if (cell.right) borders.push('border-right:2px solid #333');
-                if (cell.bottom) borders.push('border-bottom:2px solid #333');
-                if (cell.left) borders.push('border-left:2px solid #333');
+                const style = [
+                    `width:${cellSize}px`,
+                    `height:${cellSize}px`,
+                    `border-top:${cell.top ? wallWidth + 'px solid #333' : wallWidth + 'px solid transparent'}`,
+                    `border-right:${cell.right ? wallWidth + 'px solid #333' : wallWidth + 'px solid transparent'}`,
+                    `border-bottom:${cell.bottom ? wallWidth + 'px solid #333' : wallWidth + 'px solid transparent'}`,
+                    `border-left:${cell.left ? wallWidth + 'px solid #333' : wallWidth + 'px solid transparent'}`
+                ].join(';');
 
                 let content = '';
                 if (r === 0 && c === 0) content = '<span class="maze-start">S</span>';
                 if (r === this.size - 1 && c === this.size - 1) content = '<span class="maze-end">E</span>';
 
-                html += `<div class="maze-cell" style="width:${cellSize}px;height:${cellSize}px;left:${c * cellSize}px;top:${r * cellSize}px;${borders.join(';')}">${content}</div>`;
+                html += `<td class="maze-cell" style="${style}">${content}</td>`;
             }
+            html += '</tr>';
         }
 
-        html += '</div></div>';
+        html += '</table></div>';
         return html;
     }
 }
