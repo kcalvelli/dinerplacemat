@@ -201,9 +201,6 @@ class WordSearchGenerator {
             this.placeWord(word);
         }
 
-        // The word list only contains successfully placed words
-        this.words = this.placedWords.map(p => p.word);
-
         // Fill remaining empty cells with random letters
         const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         for (let y = 0; y < this.size; y++) {
@@ -213,6 +210,11 @@ class WordSearchGenerator {
                 }
             }
         }
+
+        // Verify each placed word is actually in the final grid
+        this.words = this.placedWords
+            .filter(p => this.verifyWordInGrid(p))
+            .map(p => p.word);
 
         return { grid: this.grid, words: this.words, placed: this.placedWords };
     }
@@ -230,7 +232,7 @@ class WordSearchGenerator {
         
         for (const [dx, dy] of shuffledDirs) {
             // Try random starting positions
-            for (let attempts = 0; attempts < 50; attempts++) {
+            for (let attempts = 0; attempts < 100; attempts++) {
                 const startX = Math.floor(Math.random() * this.size);
                 const startY = Math.floor(Math.random() * this.size);
                 
@@ -270,6 +272,16 @@ class WordSearchGenerator {
         for (let i = 0; i < word.length; i++) {
             this.grid[y + i * dy][x + i * dx] = word[i];
         }
+    }
+
+    verifyWordInGrid(placed) {
+        for (let i = 0; i < placed.word.length; i++) {
+            const x = placed.x + i * placed.dx;
+            const y = placed.y + i * placed.dy;
+            if (y < 0 || y >= this.size || x < 0 || x >= this.size) return false;
+            if (this.grid[y][x] !== placed.word[i]) return false;
+        }
+        return true;
     }
 
     renderHTML() {
