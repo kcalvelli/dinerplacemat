@@ -186,19 +186,23 @@ class WordSearchGenerator {
 
     generate() {
         // Initialize empty grid
-        this.grid = Array(this.size).fill(null).map(() => 
+        this.grid = Array(this.size).fill(null).map(() =>
             Array(this.size).fill(null)
         );
 
-        // Select random words
-        this.words = [...ORTHODOX_WORDS]
-            .sort(() => Math.random() - 0.5)
-            .slice(0, this.numWords);
+        // Select random words that actually fit in the grid
+        const candidates = [...ORTHODOX_WORDS]
+            .filter(w => w.length <= this.size)
+            .sort(() => Math.random() - 0.5);
 
-        // Try to place each word FIRST (before adding random letters)
-        for (const word of this.words) {
+        // Try to place words until we hit our target count
+        for (const word of candidates) {
+            if (this.placedWords.length >= this.numWords) break;
             this.placeWord(word);
         }
+
+        // The word list only contains successfully placed words
+        this.words = this.placedWords.map(p => p.word);
 
         // Fill remaining empty cells with random letters
         const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
