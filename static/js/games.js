@@ -426,6 +426,8 @@ class TicTacToe {
         this.instanceId = 'ttt-' + Math.random().toString(36).substr(2, 9);
         this.board = Array(3).fill(null).map(() => Array(3).fill(''));
         this.currentPlayer = 'X';
+        this.winner = null;
+        this.gameOver = false;
 
         if (!window.ticTacToeGames) window.ticTacToeGames = {};
         window.ticTacToeGames[this.instanceId] = this;
@@ -433,6 +435,7 @@ class TicTacToe {
 
     renderHTML() {
         let html = `<div class="tic-tac-toe-container" data-ttt-id="${this.instanceId}">`;
+        html += `<div class="ttt-status" data-ttt-id="${this.instanceId}">X's turn</div>`;
         html += '<div class="tic-tac-toe-board">';
 
         for (let y = 0; y < 3; y++) {
@@ -449,17 +452,45 @@ class TicTacToe {
     }
 
     makeMove(x, y) {
-        if (this.board[y][x] === '') {
-            this.board[y][x] = this.currentPlayer;
+        if (this.gameOver || this.board[y][x] !== '') return false;
+        this.board[y][x] = this.currentPlayer;
+        if (this.checkWin(this.currentPlayer)) {
+            this.winner = this.currentPlayer;
+            this.gameOver = true;
+        } else if (this.checkDraw()) {
+            this.gameOver = true;
+        } else {
             this.currentPlayer = this.currentPlayer === 'X' ? 'O' : 'X';
-            return true;
         }
+        return true;
+    }
+
+    checkWin(player) {
+        const b = this.board;
+        for (let i = 0; i < 3; i++) {
+            if (b[i][0] === player && b[i][1] === player && b[i][2] === player) return true;
+            if (b[0][i] === player && b[1][i] === player && b[2][i] === player) return true;
+        }
+        if (b[0][0] === player && b[1][1] === player && b[2][2] === player) return true;
+        if (b[0][2] === player && b[1][1] === player && b[2][0] === player) return true;
         return false;
+    }
+
+    checkDraw() {
+        return this.board.every(row => row.every(cell => cell !== ''));
+    }
+
+    getStatus() {
+        if (this.winner) return `${this.winner} wins!`;
+        if (this.gameOver) return "It's a draw!";
+        return `${this.currentPlayer}'s turn`;
     }
 
     reset() {
         this.board = Array(3).fill(null).map(() => Array(3).fill(''));
         this.currentPlayer = 'X';
+        this.winner = null;
+        this.gameOver = false;
     }
 }
 
@@ -1088,20 +1119,43 @@ class Crossword {
         if (acrossClues.length > 0) {
             html += '<div class="clue-section"><strong>Across</strong>';
             for (const clue of acrossClues) {
-                html += `<div class="clue">${clue.number}. ${ORTHODOX_CLUES[clue.word] || clue.word}</div>`;
+                html += `<div class="clue" data-crossword-id="${this.instanceId}" data-clue-number="${clue.number}">${clue.number}. ${ORTHODOX_CLUES[clue.word] || clue.word}</div>`;
             }
             html += '</div>';
         }
         if (downClues.length > 0) {
             html += '<div class="clue-section"><strong>Down</strong>';
             for (const clue of downClues) {
-                html += `<div class="clue">${clue.number}. ${ORTHODOX_CLUES[clue.word] || clue.word}</div>`;
+                html += `<div class="clue" data-crossword-id="${this.instanceId}" data-clue-number="${clue.number}">${clue.number}. ${ORTHODOX_CLUES[clue.word] || clue.word}</div>`;
             }
             html += '</div>';
         }
         html += '</div></div>';
 
         return html;
+    }
+
+    checkCompletedWords(container) {
+        for (const entry of this.placedWords) {
+            let correct = true;
+            for (let i = 0; i < entry.word.length; i++) {
+                const r = entry.direction === 'down' ? entry.row + i : entry.row;
+                const c = entry.direction === 'across' ? entry.col + i : entry.col;
+                const input = container.querySelector(`.crossword-input[data-r="${r}"][data-c="${c}"]`);
+                if (!input || input.value.toUpperCase() !== entry.word[i]) {
+                    correct = false;
+                    break;
+                }
+            }
+            const clueEl = container.querySelector(`.clue[data-clue-number="${entry.number}"]`);
+            if (clueEl) {
+                if (correct) {
+                    clueEl.classList.add('clue-solved');
+                } else {
+                    clueEl.classList.remove('clue-solved');
+                }
+            }
+        }
     }
 }
 
@@ -1460,6 +1514,12 @@ document.addEventListener('click', function(e) {
             const game = window.ticTacToeGames[tttId];
             if (game.makeMove(x, y)) {
                 e.target.textContent = game.board[y][x];
+                const container = e.target.closest('.tic-tac-toe-container');
+                const status = container.querySelector('.ttt-status');
+                if (status) {
+                    status.textContent = game.getStatus();
+                    status.className = 'ttt-status' + (game.winner ? ' ttt-win' : game.gameOver ? ' ttt-draw' : '');
+                }
             }
         }
     }
@@ -1469,11 +1529,17 @@ document.addEventListener('click', function(e) {
         if (window.ticTacToeGames && window.ticTacToeGames[tttId]) {
             const game = window.ticTacToeGames[tttId];
             game.reset();
-            const board = e.target.closest('.tic-tac-toe-container').querySelector('.tic-tac-toe-board');
+            const container = e.target.closest('.tic-tac-toe-container');
+            const board = container.querySelector('.tic-tac-toe-board');
             if (board) {
                 board.querySelectorAll('.tic-tac-toe-cell').forEach(cell => {
                     cell.textContent = '';
                 });
+            }
+            const status = container.querySelector('.ttt-status');
+            if (status) {
+                status.textContent = game.getStatus();
+                status.className = 'ttt-status';
             }
         }
     }
@@ -1641,6 +1707,12 @@ document.addEventListener('input', function(e) {
                 const nextInput = nextTd.querySelector('.crossword-input');
                 if (nextInput) nextInput.focus();
             }
+        }
+        // Check if any words are now complete
+        const cwId = e.target.dataset.crosswordId;
+        if (window.crosswordGames && window.crosswordGames[cwId]) {
+            const container = e.target.closest('.crossword-container');
+            if (container) window.crosswordGames[cwId].checkCompletedWords(container);
         }
     }
 });

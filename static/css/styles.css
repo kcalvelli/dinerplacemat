@@ -460,6 +460,23 @@ body {
     text-align: center;
 }
 
+.ttt-status {
+    font-weight: bold;
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+    color: var(--text-dark);
+}
+
+.ttt-status.ttt-win {
+    color: var(--green-dark, #2e7d32);
+    font-size: 1.1rem;
+}
+
+.ttt-status.ttt-draw {
+    color: var(--red-primary);
+    font-size: 1.1rem;
+}
+
 .tic-tac-toe-board {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -854,6 +871,13 @@ body {
 .clue {
     margin-bottom: 2px;
     color: var(--gray);
+    transition: all 0.3s ease;
+}
+
+.clue-solved {
+    text-decoration: line-through;
+    color: var(--green-dark, #2e7d32);
+    opacity: 0.7;
 }
 
 /* Hangman Styles */
